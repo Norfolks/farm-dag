@@ -46,6 +46,11 @@ contract FarmDAG is Ownable {
 	/* Stores index of the last asset iterated in calculateWeek function. */
 	uint lastAssetIndex;
 
+	/* Emits when farmer offers afford. */
+	event AffordSet(address farmer, string asset, uint amount);
+	/* Emits when farmer asks for demand. */
+	event DemandSet(address farmer, string asset, uint amount);
+
 	constructor () public {
 
 	}
@@ -70,8 +75,7 @@ contract FarmDAG is Ownable {
 
 		demandAssetsCount[_assetKey] = demandAssetsCount[_assetKey].sub(demandAssets[_assetKey][msg.sender]).add(_amount);
 		demandAssets[_assetKey][msg.sender] = _amount;
-		
-
+		emit DemandSet(msg.sender, _assetKey, _amount);
 	}
 
 	/**
@@ -95,6 +99,7 @@ contract FarmDAG is Ownable {
 
 		affordAssetsCount[_assetKey] = affordAssetsCount[_assetKey].sub(affordAssets[_assetKey][msg.sender]).add(_amount);
 		affordAssets[_assetKey][msg.sender] = _amount;
+		emit AffordSet(msg.sender, _assetKey, _amount);
 	}
 
 

@@ -79,15 +79,15 @@ Steps to execute contract functions:
 
 + Contract's owner starts new week with custom amount of time till farmers can write their offers and demands to the contract. (startNewWeek function)
 + Farmers write their offers and demands for assets. (setAssetDemand, setAssetAfford functions)
-+ In the end of week contract's owner start calculation of optimal distribution. (calculateWeek function)
++ At the end of week contract's owner starts calculation of optimal distribution. (calculateWeek function)
 + All the data (in format: [from_address, to_address, asset, amount]) about assets distributoin is stored in public field - dagLinks.
 
 ## Contract issues
 
 There are still some issues and improvements could be applied to the contract:
 
-+ Some of the links between farmers could repeated with different amounts for the same asset. In that case final result is addition of the amounts.
++ Some of the links between farmers could be repeated with different amounts for the same asset. In that case final result is addition of the amounts.
 + There are no limits of farmer's number that could cause "out of gas" issue.
 + Algorithm includes sort algorithm inside, it could be done offchain.
 + There are no farmer's or asset's whitelisting. 
-+ Storing farmer's addresses could be seperated by asset's batches that will optimize sort algorithm.
++ Storing farmer's addresses could be separated by asset's batches that will optimize sort algorithm.
