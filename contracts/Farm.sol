@@ -27,9 +27,9 @@ contract FarmDAG is Ownable {
 	mapping(string => mapping (address => uint)) affordAssets;
 
 	/* Array of farmers who made a request last week. */
-	address[] public farmers;
+	mapping(string => address[])  farmersByAssets;
 	/* Flags of farmers who made a request last week.*/
-	mapping(address => bool) public farmersInluded;
+	mapping(string => mapping(address => bool)) farmersInluded;
 	/* Array of assets that need to be allocated this week. */
 	string[] public assets;
 	/* Flags of assets that need to be allocated this week. */
@@ -50,6 +50,7 @@ contract FarmDAG is Ownable {
 	event AffordSet(address farmer, string asset, uint amount);
 	/* Emits when farmer asks for demand. */
 	event DemandSet(address farmer, string asset, uint amount);
+	event PackageCreate(address from, address to, string asset, uint amount);
 
 	constructor () public {
 
@@ -64,9 +65,9 @@ contract FarmDAG is Ownable {
 		require (now < timeBound);
 		require (affordAssets[_assetKey][msg.sender] == 0);
 
-		if(!farmersInluded[msg.sender] && _amount != 0){
-			farmersInluded[msg.sender] = true;
-			farmers.push(msg.sender);
+		if(!farmersInluded[_assetKey][msg.sender] && _amount != 0){
+			farmersInluded[_assetKey][msg.sender] = true;
+			farmersByAssets[_assetKey].push(msg.sender);
 		}
 		if(!assetsIncluded[_assetKey]) {
 			assetsIncluded[_assetKey] = true;
@@ -87,9 +88,9 @@ contract FarmDAG is Ownable {
 		require (now < timeBound);
 		require (demandAssets[_assetKey][msg.sender] == 0);
 
-		if(!farmersInluded[msg.sender]){
-			farmersInluded[msg.sender] = true;
-			farmers.push(msg.sender);
+		if(!farmersInluded[_assetKey][msg.sender]){
+			farmersInluded[_assetKey][msg.sender] = true;
+			farmersByAssets[_assetKey].push(msg.sender);
 		}
 
 		if(!assetsIncluded[_assetKey]) {
@@ -225,7 +226,7 @@ contract FarmDAG is Ownable {
   	* @param _byDemand flag to choose sort by demand or afford of the asset.
   	*/
 	function _getSortedFarmersByAsset(string _asset, bool _byDemand) public view returns(address[]) {
-		address[] memory farmersBuff = farmers;
+		address[] memory farmersBuff = farmersByAssets[_asset];
 		for(uint i = 0; i < farmersBuff.length - 1; i ++){
 			for(uint j = 0; j < farmersBuff.length - i - 1; j++){
 				if((_byDemand && demandAssets[_asset][farmersBuff[j]] < demandAssets[_asset][farmersBuff[j + 1]]) ||
@@ -247,10 +248,10 @@ contract FarmDAG is Ownable {
   	*/
 	function _linkTo(address _farmer, string _currentAsset, uint _amount) internal {
 		for(; _amount != 0; lastFarmerIndex++) {
-			if(lastFarmerIndex == farmers.length) {
+			if(lastFarmerIndex == farmersByAssets[_currentAsset].length) {
 				lastFarmerIndex = 0;
 			}
-			address currentFarmer = farmers[lastFarmerIndex];
+			address currentFarmer = farmersByAssets[_currentAsset][lastFarmerIndex];
 			if(affordAssets[_currentAsset][currentFarmer] == 0) {
 				continue;
 			}
@@ -266,6 +267,7 @@ contract FarmDAG is Ownable {
 				_amount = 0;
 			}
 			dagLinks.push(Package(currentFarmer, _farmer, _currentAsset, packageAmount));
+			emit PackageCreate(currentFarmer, _farmer, _currentAsset, packageAmount);
 			if (_amount == 0) {
 				break;
 			} 
@@ -280,10 +282,10 @@ contract FarmDAG is Ownable {
   	*/
 	function _linkFrom(address _farmer, string _currentAsset, uint _amount) internal {
 		for(; _amount != 0; lastFarmerIndex++) {
-			if(lastFarmerIndex == farmers.length) {
+			if(lastFarmerIndex == farmersByAssets[_currentAsset].length) {
 				lastFarmerIndex = 0;
 			}
-			address currentFarmer = farmers[lastFarmerIndex];
+			address currentFarmer = farmersByAssets[_currentAsset][lastFarmerIndex];
 			if(demandAssets[_currentAsset][currentFarmer] == 0) {
 				continue;
 			}
@@ -300,6 +302,7 @@ contract FarmDAG is Ownable {
 			}
 
 			dagLinks.push(Package(_farmer, currentFarmer, _currentAsset, packageAmount));
+			emit PackageCreate(_farmer, currentFarmer, _currentAsset, packageAmount);
 			if (_amount == 0) {
 				break;
 			} 
@@ -311,20 +314,19 @@ contract FarmDAG is Ownable {
   	* @dev clears all data created from last week distribution calculation.
   	*/
 	function _clearAllData() internal {
-		for(uint i = 0; i < farmers.length; i++) {
-			delete farmersInluded[farmers[i]];
-		}
-		for(i = 0; i < assets.length; i++) {
+		
+		for(uint i = 0; i < assets.length; i++) {
 			delete assetsIncluded[assets[i]];
 			delete demandAssetsCount[assets[i]];
 			delete affordAssetsCount[assets[i]];
-			for(uint j = 0; j < farmers.length; j++) {
-				delete demandAssets[assets[i]][farmers[j]];
-				delete affordAssets[assets[i]][farmers[j]];
+			for(uint j = 0; j < farmersByAssets[assets[i]].length; j++) {
+				delete demandAssets[assets[i]][farmersByAssets[assets[i]][j]];
+				delete affordAssets[assets[i]][farmersByAssets[assets[i]][j]];
+				delete farmersInluded[assets[i]][farmersByAssets[assets[i]][j]];
 			}
+			delete farmersByAssets[assets[i]];
 		}
 		delete assets;
-		delete farmers;
 		delete dagLinks;
 	}
 	
