@@ -50,7 +50,6 @@ contract FarmDAG is Ownable {
 	event AffordSet(address farmer, string asset, uint amount);
 	/* Emits when farmer asks for demand. */
 	event DemandSet(address farmer, string asset, uint amount);
-	event PackageCreate(address from, address to, string asset, uint amount);
 
 	constructor () public {
 
@@ -267,7 +266,6 @@ contract FarmDAG is Ownable {
 				_amount = 0;
 			}
 			dagLinks.push(Package(currentFarmer, _farmer, _currentAsset, packageAmount));
-			emit PackageCreate(currentFarmer, _farmer, _currentAsset, packageAmount);
 			if (_amount == 0) {
 				break;
 			} 
@@ -302,7 +300,6 @@ contract FarmDAG is Ownable {
 			}
 
 			dagLinks.push(Package(_farmer, currentFarmer, _currentAsset, packageAmount));
-			emit PackageCreate(_farmer, currentFarmer, _currentAsset, packageAmount);
 			if (_amount == 0) {
 				break;
 			} 
