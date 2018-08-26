@@ -1,0 +1,12 @@
+{
+  "name": "truffle-intellij-debug",
+  "version": "1.0.0",
+  "description": "A test contract",
+  "main": "index.js",
+  "scripts": {
+    "test": "node $NODE_DEBUG_OPTION ./node_modules/.bin/truffle test"
+  },
+  "devDependencies": {
+    "truffle": "^4.0.0"
+  }
+}
